@@ -11,8 +11,10 @@
 # http://personal.mecheng.adelaide.edu.au/will.robertson/research/2012-magcoil.pdf
 # ===========================================================
 
-from scipy import special   # For elliptic integrals
+from scipy import special   # For elliptic integrals 1 and 2
 import numpy as np
+import mpmath               # For elliptic integral 3
+mpmath.dps = 10;
 
 # Permeability of free space [m kg s^-2 A^-2]
 MU_0 = 1.25663706 * 10**-6
@@ -21,7 +23,7 @@ RHO_CU = 1.7 * 10**-8
 
 # Default number of windings used to convert 
 # permanent magnets to equivalent coils.
-N_M_DEFAULT = 100;
+N_M_DEFAULT = 10;   # TODO: Fix so this can be one.
 
 class Magnet(object):
     def __init__(self, B_r, l_m, r_m, V_m, beta):
@@ -71,7 +73,36 @@ class Actuator(object):
         self.c     = coil;
         self.r_gap = r_gap;
 
-    def calc_axial_force(self, z, N_m=N_M_DEFAULT):
+    def shell_method(self, z):
+        force = 0;
+        for n_r in range(1, self.c.N_r+1):
+            rad = self.__radius_of_winding(n_r);
+            force += self.__force_due_to_shell(rad, z);           
+        return -1/float(self.c.N_r)*force;
+            
+
+    def __force_due_to_shell(self, r, z):
+
+        force = 0;
+        for e1 in [1, -1]:
+            for e2 in [1, -1]:
+                m1 = z - 0.5*e1*self.m.l_m - 0.5*e2*self.c.l_c;
+                m2 = (self.m.r_m - r)**2 / float(m1**2) + 1;
+                m3 = np.sqrt((self.m.r_m + r)**2 + m1**2);
+                m4 = 4*self.m.r_m*r / float(m3);
+
+                fs = ( special.ellipk(m4) - 1/float(m2)*special.ellipe(m4)
+                       + (m1**2 / float(m3**2) -1)
+                       * mpmath.ellippi(m4/float(1-m2), m4));
+                
+                force += e1*e2*m1*m2*m3*fs;
+
+        J1 = self.m.B_r;
+        J2 = MU_0*self.c.N_z*self.c.I/float(self.c.l_c);
+        force *= J1*J2/float(2*MU_0);
+        return force;
+
+    def filament_method(self, z, N_m=N_M_DEFAULT):
         force = 0;
         for n_m in range(1, N_m+1):
             for n_r in range(1, self.c.N_r+1):

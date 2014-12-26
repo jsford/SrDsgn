@@ -30,9 +30,9 @@ valve_mu = 0.04;
 # force required to actuate valve [lbf]
 actuation_Force = valve_mu * plate_NormalForce;
 
-print "Minimum force to actuate valve:";
-print round(actuation_Force, 5), "[lbs]";
-print round(actuation_Force*453.592, 5), "[grams]";
+#print "Minimum force to actuate valve:";
+#print round(actuation_Force, 5), "[lbs]";
+#print round(actuation_Force*453.592, 5), "[grams]";
 
 # ===========================================================
 # Find a magnet configuration that can produce enough force
@@ -51,18 +51,18 @@ r_gap   = 0.0005;           # [m]
 c_I     = 1;                # [Amp]
 # Choose the wire properties
 c_rho   = RHO_CU;           # [ohm m]
-c_dw    = 0.00016;          # [m]
+c_dw    = 0.001;            # [m]
 # Choose the magnet Residual Flux Density
-m_Br    = 1.1;              # [T] 
+m_Br    = 1;              # [T] 
 # Choose the volume of the magnet
-m_Vm    = 0.0254**3;        # [m^3]
+m_Vm    = .02**3;  #0.0254**3;        # [m^3]
 
 
 act = Actuator(None, None, r_gap);
 
 
-for alpha in np.linspace(0.5, 10, 20):
-    for beta in np.linspace(0.5, 10, 20):
+for alpha in np.linspace(1, 4, 13):
+    for beta in np.linspace(0.5, 4, 15):
         # Choose the aspect ratio of the and coil and magnet
         c_alpha = alpha;            # 
         m_beta  = beta;             #
@@ -85,12 +85,12 @@ for alpha in np.linspace(0.5, 10, 20):
 
         max_force = 0;
         for disp in np.linspace(0, 40, 81):
-            f = act.calc_axial_force(disp/1000.0);
+            f = act.shell_method(disp/1000.0);
             if f > max_force:
                 max_force = f;
 
-        print ("COIL L/R: " + str(c_alpha) + "\t" +
-               "MAGNET L/R: " + str(m_beta)  + "\t" +
+        print ("COIL L/R: " + str(c_alpha) + "  \t" +
+               "MAGNET L/R: " + str(m_beta) + "  \t" +
                "Max. Force: " + str(max_force));
 
 
