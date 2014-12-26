@@ -24,29 +24,46 @@ RHO_CU = 1.7 * 10**-8
 N_M_DEFAULT = 10000;
 
 class Magnet(object):
-    def __init__(self, B_r, V_m, beta):
+    def __init__(self, B_r, l_m, r_m, V_m, beta):
         self.B_r  = B_r;
+        self.l_m  = l_m;
+        self.r_m  = r_m;
         self.V_m  = V_m;
         self.beta = beta;
-        self.R_m  = (V_m / (np.pi * self.beta) ) ** (1/3.0);
-        self.l_m  = self.beta * self.R_m;
+
+    def __repr__(self):
+        return ("=======MAGNET=======\n" +
+                "Br         =\t"  + str(self.B_r)  + "\n" +
+                "Length     =\t"  + str(self.l_m)  + "\n" +
+                "Radius     =\t"  + str(self.r_m)  + "\n" +
+                "Beta (L/R) =\t " + str(self.beta) + "\n" +
+                "Volume     =\t"  + str(self.V_m)  + "\n");
 
 class Coil(object):
-    def __init__(self, I, r_c, d_w, l_w, alpha, rho=RHO_CU):
+    def __init__(self, I, r_c, R_c, l_c, N_r, N_z, d_w, l_w, alpha, rho=RHO_CU):
         self.I     = I;     # Coil current
+        self.r_c   = r_c;   # Coil inner radius
+        self.R_c   = R_c;   # Coil outer radius
+        self.l_c   = l_c;   # Coil length
+        self.N_r   = N_r;   # Number of layers
+        self.N_z   = N_z;   # Number of windings per layer
         self.d_w   = d_w;   # Wire diam.
         self.l_w   = l_w;   # Wire length
-        self.rho   = rho;   # Wire resistivity
         self.alpha = alpha; # Coil aspect ratio
-        self.r_c   = r_c;   # Coil inner radius
-        self.l_c   = r_c * alpha;  # Coil length
-        # Coil outer radius. Equation 21 in paper cited above.
-        self.R_c   = np.sqrt(l_w*d_w**2 / (np.pi * self.l_c) + self.r_c**2);
-        # Number of layers in the coil.
-        self.N_r   = int(np.ceil((self.R_c - self.r_c) / self.d_w));
-        # Number of windings per layer.
-        self.N_z   = int(np.ceil(self.l_c / self.d_w));
-
+        self.rho   = rho;   # Wire resistivity
+    
+    def __repr__(self):
+        return ("========COIL========\n" +
+                "Current [A]            =\t" + str(self.I)     + "\n" +
+                "Coil Inner Radius [mm] =\t" + str(self.r_c*1000.0)   + "\n" +
+                "Coil Outer Radius [mm] =\t" + str(self.R_c*1000.0)   + "\n" +
+                "Coil Length [m]        =\t" + str(self.l_c)   + "\n" +
+                "# of Layers            =\t" + str(self.N_r)   + "\n" +
+                "Windings Per Layer     =\t" + str(self.N_z)   + "\n" +
+                "Wire Diameter [mm]     =\t" + str(self.d_w*1000.0)   + "\n" +
+                "Wire Length [m]        =\t" + str(self.l_w)   + "\n" +
+                "Alpha                  =\t" + str(self.alpha) + "\n" +
+                "Rho [ohm m]            =\t" + str(self.rho)   + "\n");
 class Actuator(object):
     def __init__(self, magnet, coil, r_gap):
         self.m     = magnet;
@@ -60,7 +77,7 @@ class Actuator(object):
                 for n_z in range(1, self.c.N_z+1):
                     force += self.force_between_windings(
                              self.__radius_of_winding(n_r),
-                             self.m.R_m,
+                             self.m.r_m,
                              z + self.__dist_between_coils(n_m, n_z, N_m),
                              N_m
                              );
@@ -103,17 +120,6 @@ class Actuator(object):
                  + (n_z - 1)/float(self.c.N_z - 1) * self.c.l_c
                  + (n_m - 1)/float(N_m - 1) * self.m.l_m
                );
-    
-# Verify my implementation by reproducing the data in Fig. 4 of [Robertson]
-def verify():
-    c = Coil(1, .01, .0005, 2.576, 2);
-    m = Magnet(1, np.pi*.009**2*.01, 10/9.0);
-    actuateHer = Actuator(m, c, .001);
 
-    print "Displacement [mm]  Force [N]"
-    for d in np.linspace(0, 0.04 , 81, endpoint=True):
-        print( str(d*1000) + 
-               "\t\t   " +
-               str(round(actuateHer.calc_axial_force(d, 1000), 6))
-             );
-
+    def __str__(self):
+        return str(self.m) + "\n" +  str(self.c);

@@ -40,42 +40,42 @@ print round(actuation_Force*453.592, 5), "[grams]";
 # ===========================================================
 
 from actuator import *
+import numpy as np
+import math
 
 # Choose a Coil Impedance
-R = 4;  # [ohm]
+R = 4;                      # [ohm]
+# Choose an Air Gap
+r_gap   = 0.0005;           # [m]
+# Choose the coil current
+c_I     = 1;                # [Amp]
+# Choose the wire properties
+c_rho   = RHO_CU;           # [ohm m]
+c_dw    = 0.00016;          # [m]
+# Choose the magnet Residual Flux Density
+m_Br    = 1.1;              # [T] 
+# Choose the aspect ratio of the and coil and magnet
+c_alpha = 2;                # 
+m_beta  = 2;                #
+# Choose the volume of the magnet
+m_Vm    = 0.0254**3;        # [m^3]
 
-c_I     = 1;                         # [Amp]
-c_rc    = 0.01;                      # [m]
-c_dw    = 0.00016;                   # [m]
-c_lw    = R*np.pi*(0.5*c_dw)**2/float(RHO_CU);  # [m]
-c_alpha = 2;                         #
-m_Br    = 1;                         # [T]
-m_Vm    = 3.218e-6                   # [m^3] .25 in. radius 1 in. height
-m_beta  = 10/9.0;                    #
- 
-disp    = 0.001;
+# Calculate the magnet dimensions
+m_rm    = (m_Vm/float(np.pi*m_beta))**(1/3.0);  # [m]
+m_lm    = m_beta * m_rm;
 
-c = Coil(c_I, c_rc, c_dw, c_lw, c_alpha);
-m = Magnet(m_Br, m_Vm, m_beta);
-act = Actuator(m, c, disp);
-
-
-
-print c.l_w
-print c.N_r*c.N_z
-
-
-
-
-
-
-
-
+# Calculate the coil dimensions
+c_lw    = R*np.pi*(0.5*c_dw)**2/float(c_rho);   # [m]
+c_rc    = m_rm + r_gap;     # [m]
+c_lc    = c_alpha * c_rc;   #
+c_Rc    = np.sqrt(c_lw*c_dw**2/float(np.pi*c_lc) + c_rc**2); 
+c_Nz    = int(math.ceil( c_lc / float(c_dw)));
+c_Nr    = int(math.ceil( (c_Rc - c_rc) / float(c_dw)));
 
 
+c = Coil(c_I, c_Rc, c_rc, c_lc, c_Nr, c_Nz, c_dw, c_lw, c_alpha);
+m = Magnet(m_Br, m_lm, m_rm, m_Vm, m_beta);
+act = Actuator(m, c, r_gap);
 
 
-
-
-
-
+print act
