@@ -54,28 +54,61 @@ c_rho   = RHO_CU;           # [ohm m]
 c_dw    = 0.00016;          # [m]
 # Choose the magnet Residual Flux Density
 m_Br    = 1.1;              # [T] 
-# Choose the aspect ratio of the and coil and magnet
-c_alpha = 2;                # 
-m_beta  = 2;                #
 # Choose the volume of the magnet
 m_Vm    = 0.0254**3;        # [m^3]
 
-# Calculate the magnet dimensions
-m_rm    = (m_Vm/float(np.pi*m_beta))**(1/3.0);  # [m]
-m_lm    = m_beta * m_rm;
 
-# Calculate the coil dimensions
-c_lw    = R*np.pi*(0.5*c_dw)**2/float(c_rho);   # [m]
-c_rc    = m_rm + r_gap;     # [m]
-c_lc    = c_alpha * c_rc;   #
-c_Rc    = np.sqrt(c_lw*c_dw**2/float(np.pi*c_lc) + c_rc**2); 
-c_Nz    = int(math.ceil( c_lc / float(c_dw)));
-c_Nr    = int(math.ceil( (c_Rc - c_rc) / float(c_dw)));
+act = Actuator(None, None, r_gap);
 
 
-c = Coil(c_I, c_Rc, c_rc, c_lc, c_Nr, c_Nz, c_dw, c_lw, c_alpha);
-m = Magnet(m_Br, m_lm, m_rm, m_Vm, m_beta);
-act = Actuator(m, c, r_gap);
+for alpha in np.linspace(0.5, 10, 20):
+    for beta in np.linspace(0.5, 10, 20):
+        # Choose the aspect ratio of the and coil and magnet
+        c_alpha = alpha;            # 
+        m_beta  = beta;             #
+
+        # Calculate the magnet dimensions
+        m_rm    = (m_Vm/float(np.pi*m_beta))**(1/3.0);  # [m]
+        m_lm    = m_beta * m_rm;
+
+        # Calculate the coil dimensions
+        c_lw    = R*np.pi*(0.5*c_dw)**2/float(c_rho);   # [m]
+        c_rc    = m_rm + r_gap;     # [m]
+        c_lc    = c_alpha * c_rc;   #
+        c_Rc    = np.sqrt(c_lw*c_dw**2/float(np.pi*c_lc) + c_rc**2); 
+        c_Nz    = int(math.ceil( c_lc / float(c_dw)));
+        c_Nr    = int(math.ceil( (c_Rc - c_rc) / float(c_dw)));
 
 
-print act
+        act.c = Coil(c_I, c_Rc, c_rc, c_lc, c_Nr, c_Nz, c_dw, c_lw, c_alpha);
+        act.m = Magnet(m_Br, m_lm, m_rm, m_Vm, m_beta);
+
+        max_force = 0;
+        for disp in np.linspace(0, 40, 81):
+            f = act.calc_axial_force(disp/1000.0);
+            if f > max_force:
+                max_force = f;
+
+        print ("COIL L/R: " + str(c_alpha) + "\t" +
+               "MAGNET L/R: " + str(m_beta)  + "\t" +
+               "Max. Force: " + str(max_force));
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

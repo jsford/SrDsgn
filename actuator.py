@@ -21,7 +21,7 @@ RHO_CU = 1.7 * 10**-8
 
 # Default number of windings used to convert 
 # permanent magnets to equivalent coils.
-N_M_DEFAULT = 10000;
+N_M_DEFAULT = 100;
 
 class Magnet(object):
     def __init__(self, B_r, l_m, r_m, V_m, beta):
@@ -64,6 +64,7 @@ class Coil(object):
                 "Wire Length [m]        =\t" + str(self.l_w)   + "\n" +
                 "Alpha                  =\t" + str(self.alpha) + "\n" +
                 "Rho [ohm m]            =\t" + str(self.rho)   + "\n");
+
 class Actuator(object):
     def __init__(self, magnet, coil, r_gap):
         self.m     = magnet;
@@ -81,7 +82,7 @@ class Actuator(object):
                              z + self.__dist_between_coils(n_m, n_z, N_m),
                              N_m
                              );
-        return force;
+        return -force;  # I prefer positive forces. :D
                     
 
     # Calculate the force between two coaxial windings 
