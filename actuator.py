@@ -17,7 +17,7 @@ import mpmath               # For elliptic integral 3
 mpmath.dps = 10;
 
 # Permeability of free space [m kg s^-2 A^-2]
-MU_0 = 1.25663706 * 10**-6
+MU_0 = np.pi*4.0*10**-7 
 # Resistivity of copper [ohm m]
 RHO_CU = 1.7 * 10**-8
 
@@ -42,7 +42,7 @@ class Magnet(object):
                 "Volume     =\t"  + str(self.V_m)  + "\n");
 
 class Coil(object):
-    def __init__(self, I, r_c, R_c, l_c, N_r, N_z, d_w, l_w, alpha, rho=RHO_CU):
+    def __init__(self, I, R_c, r_c, l_c, N_r, N_z, d_w, l_w, alpha, rho=RHO_CU):
         self.I     = I;     # Coil current
         self.r_c   = r_c;   # Coil inner radius
         self.R_c   = R_c;   # Coil outer radius
@@ -77,30 +77,28 @@ class Actuator(object):
         force = 0;
         for n_r in range(1, self.c.N_r+1):
             rad = self.__radius_of_winding(n_r);
-            force += self.__force_due_to_shell(rad, z);           
-        return -1/float(self.c.N_r)*force;
+            force += self.force_due_to_shell(rad, z);           
+        return force;
             
 
-    def __force_due_to_shell(self, r, z):
-
+    def force_due_to_shell(self, r, z):
         force = 0;
-        for e1 in [1, -1]:
-            for e2 in [1, -1]:
+        for e1 in [-1, 1]:
+            for e2 in [-1, 1]:
                 m1 = z - 0.5*e1*self.m.l_m - 0.5*e2*self.c.l_c;
-                m2 = (self.m.r_m - r)**2 / float(m1**2) + 1;
+                m2 = ((self.m.r_m - r) / float(m1))**2 + 1;
                 m3 = np.sqrt((self.m.r_m + r)**2 + m1**2);
-                m4 = 4*self.m.r_m*r / float(m3);
+                m4 = 4*self.m.r_m*r / float(m3**2);     # Different from paper.
 
-                fs = ( special.ellipk(m4) - 1/float(m2)*special.ellipe(m4)
-                       + (m1**2 / float(m3**2) -1)
+                fs = ( special.ellipk(m4) - 1.0/m2*special.ellipe(m4)
+                       + (m1**2 / float(m3**2) - 1)
                        * mpmath.ellippi(m4/float(1-m2), m4));
                 
                 force += e1*e2*m1*m2*m3*fs;
 
         J1 = self.m.B_r;
         J2 = MU_0*self.c.N_z*self.c.I/float(self.c.l_c);
-        force *= J1*J2/float(2*MU_0);
-        return force;
+        return (J1*J2)/float(2*MU_0) * force;
 
     def filament_method(self, z, N_m=N_M_DEFAULT):
         force = 0;
@@ -113,7 +111,7 @@ class Actuator(object):
                              z + self.__dist_between_coils(n_m, n_z, N_m),
                              N_m
                              );
-        return -force;  # I prefer positive forces. :D
+        return force;  # I prefer positive forces. :D
                     
 
     # Calculate the force between two coaxial windings 

@@ -60,10 +60,9 @@ m_Vm    = .02**3;  #0.0254**3;        # [m^3]
 
 act = Actuator(None, None, r_gap);
 
-
 for alpha in np.linspace(1, 4, 13):
     for beta in np.linspace(0.5, 4, 15):
-        # Choose the aspect ratio of the and coil and magnet
+        # choose the aspect ratio of the and coil and magnet
         c_alpha = alpha;            # 
         m_beta  = beta;             #
 
@@ -83,6 +82,17 @@ for alpha in np.linspace(1, 4, 13):
         act.c = Coil(c_I, c_Rc, c_rc, c_lc, c_Nr, c_Nz, c_dw, c_lw, c_alpha);
         act.m = Magnet(m_Br, m_lm, m_rm, m_Vm, m_beta);
 
+        import time
+        t0 = time.time();
+        f_s = act.shell_method(0.0);
+        t1 = time.time();
+        f_f = act.filament_method(0.0);
+        t2 = time.time();
+        print "SHELL TIME: " + str(t1 - t0);
+        print "SHELL FORCE: " + str(f_s);
+        print "FILAMENT TIME: " + str(t2 - t1);
+        print "FILAMENT FORCE: " + str(f_f);
+
         max_force = 0;
         for disp in np.linspace(0, 40, 81):
             f = act.shell_method(disp/1000.0);
@@ -92,23 +102,4 @@ for alpha in np.linspace(1, 4, 13):
         print ("COIL L/R: " + str(c_alpha) + "  \t" +
                "MAGNET L/R: " + str(m_beta) + "  \t" +
                "Max. Force: " + str(max_force));
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
