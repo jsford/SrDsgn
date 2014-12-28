@@ -1,0 +1,21 @@
+Jordan Ford
+12/18/14
+
+This folder contains a verifiable implementation of the shell and filament
+methods for calculating the force between a coil and a cylindrical magnet.
+These methods are described (with a couple typos) in ../docs/magcyl.pdf
+The following files are included here:
+
+    validation.py  - A python script that sets up the conditions required to
+                     duplicate Fig. 4 in magcyl.pdf and produces the graph in 
+                     validation.pdf
+                     RUN: ipython validation.py
+
+    actuator.py    - The class definitions for Magnet, Coil, and Actuator. 
+                     Defines the shell and filament methods.
+    
+    Validation.pdf - A matplotlib graph comparing the filament and
+                     shell methods. It should duplicate Fig. 4 from magcyl.pdf
+    
+    Validation.ods - An Excel spreadsheet with pretty much the same information
+                     as Validation.pdf    
